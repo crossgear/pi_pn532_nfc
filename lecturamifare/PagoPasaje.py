@@ -5,8 +5,7 @@ import os, sys
 import signal
 import time
 import RPi.GPIO as GPIO
-import mysql.connector
-from mysql.connector import errorcode
+import pymysql
 
 GPIO.setwarnings(False)
 
@@ -66,12 +65,15 @@ try:
         pasaje = 2000
        
         try:
-          cnx = mysql.connector.connect(user='root', password='0961341242',
-                                 host='127.0.0.1',
-                                 database='prueba')
+          cnx = pymysql.connect(host = "localhost", 
+                                port = "3306", 
+                                user = "pi", 
+                                passwd = "raspberry",
+                                db = "prueba",
+                                unix_socket="/var/run/mysqld/mysqld.sock")
           cursor = cnx.cursor()
           
-          cursor.execute ("SELECT uid, estado, saldo FROM tarjetas WHERE uid = %s", ("a27a45f2",))
+          cursor.execute ("SELECT uid, estado, saldo FROM tarjetas WHERE uid = %s", key)
           
           for uid, estado, saldo in cursor:
           
@@ -85,7 +87,7 @@ try:
                           
                           cnx.commit()
                           print("PAGADO")
-                      except mysql.connector.Error as err:
+                      except pymysql.err as err:
                           print(err)
                       finally:
                           cnx.close()
@@ -105,7 +107,7 @@ try:
                     color(0, 100, 100, 3)
                     time.sleep(0.5)
               
-        except mysql.connector.Error as err:
+        except pymysql.err as err:
           if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
             print("Something is wrong with your user name or password")
           elif err.errno == errorcode.ER_BAD_DB_ERROR:
@@ -113,7 +115,7 @@ try:
           else:
             print(err)
         finally:
-            cnx.close()
+            #cnx.close()
             cursor.close()
         
         #-------
