@@ -5,25 +5,26 @@ import os, sys
 import signal
 import time
 import RPi.GPIO as GPIO
+#libreria para conexion a mysql
 import pymysql
+#libreria a utilizar para lectura nfc
+from modules.py532lib.i2c import *
+
+#----------///////Control del led a traves del GPIO///////-------------
 
 GPIO.setwarnings(False)
 
-# Set GPIO to Broadcom system and set RGB Pin numbers
 GPIO.setmode(GPIO.BCM)
 red = 17
 green = 18
 blue = 27
 
-# Set pins to output mode
 GPIO.setup(red, GPIO.OUT)
 GPIO.setup(green, GPIO.OUT)
 GPIO.setup(blue, GPIO.OUT)
  
 Freq = 100 #Hz
- 
-# Setup all the LED colors with an initial
-# duty cycle of 0 which is off
+
 RED = GPIO.PWM(red, Freq)
 RED.start(100)
 GREEN = GPIO.PWM(green, Freq)
@@ -31,21 +32,19 @@ GREEN.start(100)
 BLUE = GPIO.PWM(blue, Freq)
 BLUE.start(100)
 
-# Define a simple function to turn on the LED colors
+#una funcion simple para prender los leds
 def color(R, G, B, on_time):
-    # Color brightness range is 0-100%
+    
     RED.ChangeDutyCycle(R)
     GREEN.ChangeDutyCycle(G)
     BLUE.ChangeDutyCycle(B)
     time.sleep(on_time)
  
-    # Turn all LEDs off after on_time seconds
     RED.ChangeDutyCycle(100)
     GREEN.ChangeDutyCycle(100)
     BLUE.ChangeDutyCycle(100)
 
-#libreria a utilizar para lectura nfc
-from modules.py532lib.i2c import *
+#-----------------///////Inicio de proceso de pago//////////------------------------
 
 print("PAGO DE PASAJE")
 nfc = Pn532_i2c()           # Inicializa i2c
@@ -61,10 +60,11 @@ try:
         print (key)
         time.sleep(1)
         #---Consulta BD
-        #verificamos si existe el id en la base de datos
-        pasaje = 2000
+        
+        pasaje = 2000 #este es una variable el pasaje actual esta entre 2200 y 3400
        
         try:
+        #nos conectamos a la base de datos
           cnx = pymysql.connect(host = "localhost", 
                                 port = "3306", 
                                 user = "pi", 
@@ -72,7 +72,7 @@ try:
                                 db = "prueba",
                                 unix_socket="/var/run/mysqld/mysqld.sock")
           cursor = cnx.cursor()
-          
+          #verificamos si existe el id en la base de datos
           cursor.execute ("SELECT uid, estado, saldo FROM tarjetas WHERE uid = %s", key)
           
           for uid, estado, saldo in cursor:
@@ -103,6 +103,7 @@ try:
                       time.sleep(0.5)
                     
               else:
+                  #si la tarjeta esta inactiva o es desconocida
                     print("Tarjeta Inactiva o desconocida")
                     color(0, 100, 100, 3)
                     time.sleep(0.5)
