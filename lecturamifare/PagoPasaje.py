@@ -23,7 +23,7 @@ GPIO.setup(red, GPIO.OUT)
 GPIO.setup(green, GPIO.OUT)
 GPIO.setup(blue, GPIO.OUT)
  
-Freq = 100 #Hz
+Freq = 200 #Hz
 
 RED = GPIO.PWM(red, Freq)
 RED.start(100)
@@ -121,7 +121,8 @@ try:
         
         #-------
         
-except KeyboardInterrupt:
+except (KeyboardInterrupt, SystemExit):
+
     print ("Saliendo...")
     
 finally:
