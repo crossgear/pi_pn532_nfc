@@ -23,5 +23,3 @@ except pymysql.err as e:
 
 finally:
     db.close()
-
-    #
