@@ -93,13 +93,10 @@ try:
                           cnx.close()
                       color(100, 50, 100, 3)
                       time.sleep(0.5)
-                    #--sin saldo
-                  elif(saldo == 0):
-                      print("Debe Cargar Saldo")
-                      time.sleep(0.5)
                   else:
                       #saldo menor al pasaje
                       print("Saldo Insuficiente")
+                      color(0,0,100,3)
                       time.sleep(0.5)
                     
               else:
