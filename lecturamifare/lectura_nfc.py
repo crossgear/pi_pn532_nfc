@@ -1,7 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-# vim :set tabstop=4 expandtab shiftwidth=4 softtabstop=4
-
 import os, sys
 import signal
 import time
