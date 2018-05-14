@@ -6,7 +6,8 @@ import signal
 import time
 import RPi.GPIO as GPIO
 #libreria para conexion a mysql
-import pymysql
+import mysql.connector
+from mysql.connector import errorcode
 #libreria a utilizar para lectura nfc
 from modules.py532lib.i2c import *
 
@@ -59,62 +60,69 @@ try:
         key=''.join(["%0.2X" % x for x in card_data[7:11]])[0:(2*4)]
         print (key)
         time.sleep(1)
-        #---Consulta BD
+        #---Consulta BD----
         
         pasaje = 2000 #este es una variable el pasaje actual esta entre 2200 y 3400
        
         try:
-        #nos conectamos a la base de datos
-          cnx = pymysql.connect(host = "localhost", 
-                                port = "3306", 
-                                user = "pi", 
-                                passwd = "raspberry",
-                                db = "prueba",
-                                unix_socket="/var/run/mysqld/mysqld.sock")
-          cursor = cnx.cursor()
-          #verificamos si existe el id en la base de datos
-          cursor.execute ("SELECT uid, estado, saldo FROM tarjetas WHERE uid = %s", key)
+            #nos conectamos a la base de datos
+            cnx = mysql.connector.connect(user='pi', 
+                              password='raspberry',
+                              host='127.0.0.1',
+                              database='prueba')  
+
+            cursor = cnx.cursor()
+            #verificamos si existe el id en la base de datos
+            cursor.execute ("SELECT uid, estado, saldo FROM tarjetas WHERE uid = %s", (key,))
           
-          for uid, estado, saldo in cursor:
+            data = cursor.fetchall()
+
+            if len(data) == 1:
+                
+                for uid, estado, saldo in data:
           
-              if (key == uid.upper()) and (estado == 1):
-                  #---descontamos el monto del pasaje
-                  if(saldo >= pasaje):
-                      try:
-                          cursor.execute ("UPDATE tarjetas "
-                                          "SET saldo = saldo - %s "
-                                          "WHERE uid = %s", (pasaje, uid))
-                          
-                          cnx.commit()
-                          print("PAGADO")
-                      except pymysql.err as err:
-                          print(err)
-                      finally:
-                          cnx.close()
-                      color(100, 50, 100, 3)
-                      time.sleep(0.5)
-                  else:
-                      #saldo menor al pasaje
-                      print("Saldo Insuficiente")
-                      color(0,0,100,3)
-                      time.sleep(0.5)
-                    
-              else:
-                  #si la tarjeta esta inactiva o es desconocida
-                    print("Tarjeta Inactiva o desconocida")
-                    color(0, 100, 100, 3)
-                    time.sleep(0.5)
+                    if (key.upper() == uid.upper()) and (estado == 1):
+                        #---descontamos el monto del pasaje
+                        if(saldo >= pasaje):
+                            try:
+                                cursor.execute ("UPDATE tarjetas "
+                                                "SET saldo = saldo - %s "
+                                                "WHERE uid = %s", (pasaje, uid))
+                                
+                                cnx.commit()
+                                print("PAGADO")
+                            except mysql.connector.Error as err:
+                                print(err)
+                            finally: 
+                                color(100, 50, 100, 3)
+                                time.sleep(0.5)
+                        else:
+                            #saldo menor al pasaje
+                            print("Saldo Insuficiente")
+                            color(0,0,100,3)
+                            time.sleep(0.5)
+                            
+                    else:
+                        #si la tarjeta esta inactiva o es desconocida
+                            print("Tarjeta Inactiva")
+                            color(0, 100, 100, 3)
+                            time.sleep(0.5)
+
+            else:
+                
+                print("Tarjeta Desconocida!!")
+
               
-        except pymysql.err as err:
-          if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("Something is wrong with your user name or password")
-          elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("Database does not exist")
-          else:
-            print(err)
+        except mysql.connector.Error as err:
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                print("Something is wrong with your user name or password")
+            elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                print("Database does not exist")
+            else:
+                print(err)
         finally:
-            #cnx.close()
             cursor.close()
+            cnx.close()
         
         #-------
         
