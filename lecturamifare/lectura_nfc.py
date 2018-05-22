@@ -1,7 +1,7 @@
 import os, sys
 import signal
 import time
-
+import RPi.GPIO as GPIO
 from modules.py532lib.i2c import *
 
 def signal_handler(signal, frame):
@@ -17,13 +17,13 @@ nfc.SAMconfigure()          # Le indicamos al lector que configure la SAM(Secure
 
 try:  
     while 1:
-      print(" >>> Pasa una tarjeta o tag por el lector NFC <<< ")  
-      card_data = ""
-      while card_data=="":
-        card_data = nfc.read_mifare().get_data()  # Activamos el lector para leer las tarjetas que se acerquen
-      key=''.join(["%0.2X" % x for x in card_data[7:11]])[0:(2*4)]
-      print("NFC key: ", key)
-      time.sleep(1)
+        print(" >>> Pasa una tarjeta o tag por el lector NFC <<< ")  
+        card_data = ""
+        while card_data=="":
+            card_data = nfc.read_mifare().get_data()  # Activamos el lector para leer las tarjetas que se acerquen
+        key=''.join(["%0.2X" % x for x in card_data[7:14]])
+        print("NFC key: ", key)
+        time.sleep(1)
 
 except (KeyboardInterrupt, SystemExit):
     print("Saliendo...")

@@ -53,21 +53,20 @@ nfc.reset_i2c()
 nfc.SAMconfigure()          # Le indicamos al lector que configure la SAM(Secure Access Module) para actuar como lector
 try:
     while 1:
-      print(" >>> Deslice su tarjeta porfavor <<< ")
-      card_data = ""
-      while card_data=="":
-        card_data = nfc.read_mifare().get_data()  # Activamos el lector para leer las tarjetas que se acerquen
-        key=''.join(["%0.2X" % x for x in card_data[7:11]])[0:(2*4)]
+        print(" >>> Deslice su tarjeta porfavor <<< ")
+        card_data = ""
+        while card_data=="":
+            card_data = nfc.read_mifare().get_data()  # Activamos el lector para leer las tarjetas que se acerquen
+        key=''.join(["%0.2X" % x for x in card_data[7:11]])
         print (key)
         time.sleep(1)
         #---Consulta BD----
-        
         pasaje = 2000 #este es una variable el pasaje actual esta entre 2200 y 3400
        
         try:
             #nos conectamos a la base de datos
-            cnx = mysql.connector.connect(user='pi', 
-                              password='raspberry',
+            cnx = mysql.connector.connect(user='root', 
+                              password='0961341242',
                               host='127.0.0.1',
                               database='prueba')  
 
@@ -108,9 +107,9 @@ try:
                             color(0, 100, 100, 3)
                             time.sleep(0.5)
 
-            else:
+            #else:
                 
-                print("Tarjeta Desconocida!!")
+             #   print("Tarjeta Desconocida!!")
 
               
         except mysql.connector.Error as err:
