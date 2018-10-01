@@ -4,6 +4,8 @@
 import os, sys
 import signal
 import time
+import sqlite3
+from datetime import datetime, date, timedelta
 import RPi.GPIO as GPIO
 #libreria para conexion a mysql
 import mysql.connector
@@ -60,56 +62,81 @@ try:
         key=''.join(["%0.2X" % x for x in card_data[7:11]])
         print (key)
         time.sleep(1)
-        #---Consulta BD----
-        pasaje = 2000 #este es una variable el pasaje actual esta entre 2200 y 3400
-       
+        #--- Consulta BD Interna----
+        
+        con = sqlite3.connect('data.db')
+        cursor = con.cursor()
+        cursor.execute("select monto from pasaje")
+        data = cursor.fetchall()
+        for m in data:
+            pasaje = m[0]#pasaje actual
+        fecha = datetime.now().date()
+        #--- Consulta BD Externa----       
         try:
             #nos conectamos a la base de datos
             cnx = mysql.connector.connect(user='root', 
                               password='0961341242',
-                              host='127.0.0.1',
-                              database='prueba')  
+                              host='192.168.1.113',
+                              database='xbus')  
 
             cursor = cnx.cursor()
-            #verificamos si existe el id en la base de datos
-            cursor.execute ("SELECT uid, estado, saldo FROM tarjetas WHERE uid = %s", (key,))
-          
+            
+            #ejecutamos una consulta a la base de datos pidiendo los campos uid, fecha_vencimiento, estado, saldo_actual
+            cursor.execute ("SELECT uid, estado, saldo_actual, fecha_vencimiento FROM tarjetas WHERE uid = %s", (key,))
+            
+            #obtenermos los datos y lo guardamos en una variable
             data = cursor.fetchall()
 
-            if len(data) == 1:
+            if len(data) == 1:#si recibo algo continua el script
+                #--------------------------------------------------------#
+                for uid, estado, saldo_actual, fecha_vencimiento in data:
                 
-                for uid, estado, saldo in data:
-          
-                    if (key.upper() == uid.upper()) and (estado == 1):
-                        #---descontamos el monto del pasaje
-                        if(saldo >= pasaje):
-                            try:
-                                cursor.execute ("UPDATE tarjetas "
-                                                "SET saldo = saldo - %s "
-                                                "WHERE uid = %s", (pasaje, uid))
-                                
-                                cnx.commit()
-                                print("PAGADO")
-                            except mysql.connector.Error as err:
-                                print(err)
-                            finally: 
-                                color(100, 50, 100, 3)
-                                time.sleep(0.5)
+                    if estado == 1 :
+                        
+                        fecha = datetime.now().date()
+                        fecha_dada = fecha_vencimiento
+                    
+                        if str(fecha_dada) > str(fecha):
+            
+                            if (key.upper() == uid.upper()):
+                                #si el uid es igual al key que acabamos de capturar y el estado es 1 osea activo
+                                #consultamos el monto del pasaje
+
+                                if(saldo_actual >= pasaje):
+                                    try:
+                                        cursor.execute ("UPDATE tarjetas "
+                                                            "SET saldo_actual = saldo_actual - %s "
+                                                            "WHERE uid = %s", (pasaje, uid))
+                                            
+                                        cnx.commit()
+                                        print("-----PAGADO-----")#Verde
+                                    except mysql.connector.Error as err:
+                                        print(err)
+                                    finally: 
+                                        color(100, 50, 100, 3)
+                                        time.sleep(0.5)
+                                else:
+                                    #si el saldo es menor al precio del pasaje
+                                    print("Saldo Insuficiente")#Azul
+                                    color(100, 100, 0, 3)
+                                    time.sleep(0.5)
+
                         else:
-                            #saldo menor al pasaje
-                            print("Saldo Insuficiente")
-                            color(0,0,100,3)
-                            time.sleep(0.5)
-                            
-                    else:
-                        #si la tarjeta esta inactiva o es desconocida
-                            print("Tarjeta Inactiva")
-                            color(0, 100, 100, 3)
+                            #si la tarjeta esta vencida = Amarillo
+                            print("Tarjeta Vencida")
+                            color(0, 0, 100, 3)
                             time.sleep(0.5)
 
-            #else:
+
+                    else:
+                        #si la tarjeta esta inactiva - Rojo
+                        print("Tarjeta Inactiva")
+                        color(0, 100, 100, 3)
+                        time.sleep(0.5)
+
+            else:#caso contrario no existe la tarjeta en el sistema
                 
-             #   print("Tarjeta Desconocida!!")
+               print("Tarjeta Desconocida")
 
               
         except mysql.connector.Error as err:
