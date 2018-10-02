@@ -63,14 +63,27 @@ try:
         print (key)
         time.sleep(1)
         #--- Consulta BD Interna----
-        
+
         con = sqlite3.connect('data.db')
         cursor = con.cursor()
-        cursor.execute("select monto from pasaje")
+        cursor.execute('SELECT monto FROM pasaje')
         data = cursor.fetchall()
         for m in data:
             pasaje = m[0]#pasaje actual
+            
+        cursor.execute('SELECT id, num_doc_ini FROM timbrados;')
+        data = cursor.fetchall()
+        for n in data:
+            timb = n[0]#id timbrado 
+            num = n[1]#num_doc_ini
+
+        cursor.execute('SELECT id FROM lectores;')
+        data = cursor.fetchall()
+        for i in data:
+            lect = i[0]#id lector
+        
         fecha = datetime.now().date()
+        
         #--- Consulta BD Externa----       
         try:
             #nos conectamos a la base de datos
@@ -107,7 +120,10 @@ try:
                                         cursor.execute ("UPDATE tarjetas "
                                                             "SET saldo_actual = saldo_actual - %s "
                                                             "WHERE uid = %s", (pasaje, uid))
-                                            
+                                        
+                                        args = [timb, int(num), lect]
+                                        cursor.callproc('InsertarComprobante', args)    
+                                        
                                         cnx.commit()
                                         print("-----PAGADO-----")#Verde
                                     except mysql.connector.Error as err:
@@ -138,7 +154,7 @@ try:
                 
                print("Tarjeta Desconocida")
 
-              
+
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
                 print("Something is wrong with your user name or password")
