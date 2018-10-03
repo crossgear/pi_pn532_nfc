@@ -1,3 +1,4 @@
+import calculo_numdoc
 import sqlite3
 """import mysql.connector
 
@@ -31,35 +32,35 @@ args = [timb, int(num), pasaje, lect]
 print(args)
 cursor.callproc('InsertarComprobante', args) """
 
-con = sqlite3.connect('data.db')
+
+"""con = sqlite3.connect('data.db')
 cursor = con.cursor()
-
-cursor.execute('SELECT numero FROM numero_documentos')
+cursor.execute('SELECT numero FROM numeros_documentos;')
 data = cursor.fetchall()
 for d in data:
     numdoc = d[0]
 print(numdoc)
 
 result = numdoc + 1
-
+    
 print(result)
 
-cursor.execute("insert into numero_documentos values(?);", [result])
-con.commit()#####IMPORTANTE!!!!!!
-cursor.execute('SELECT numero FROM numero_documentos')
-data = cursor.fetchall()
-for d in data:
-    numdoc = d[0]
-print(numdoc)
+cursor.execute("insert into numeros_documentos values(4001044,?);", [result])
+con.commit()
 
-result = numdoc + 1
 
-print(result)
+cursor.execute('SELECT cabecera, numero FROM numeros_documentos order by numero desc limit 1;')
+for k, j in cursor:
+    data=[k,j]
+    d = "".join(str(data[0]))+"".join(str(data[1]))
+    print(d)
 
-cursor.execute("insert into numero_documentos values(?);", [result])
 
-cursor.execute('SELECT numero FROM numero_documentos')
-data = cursor.fetchall()
-for d in data:
-    numdoc = d[0]
-print(numdoc)
+con.close()"""
+from calculo_numdoc import calculate
+while 1:
+    enter=""
+    while enter=="":
+        enter=input("continuar?")
+        cal = calculate()
+        print(cal)

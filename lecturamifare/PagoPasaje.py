@@ -5,6 +5,7 @@ import os, sys
 import signal
 import time
 import sqlite3
+from calculo_numdoc import calculate
 from datetime import datetime, date, timedelta
 import RPi.GPIO as GPIO
 #libreria para conexion a mysql
@@ -75,7 +76,6 @@ try:
         data = cursor.fetchall()
         for n in data:
             timb = n[0]#id timbrado 
-            num = n[1]#num_doc_ini
 
         cursor.execute('SELECT id FROM lectores;')
         data = cursor.fetchall()
@@ -89,7 +89,7 @@ try:
             #nos conectamos a la base de datos
             cnx = mysql.connector.connect(user='root', 
                               password='0961341242',
-                              host='192.168.1.113',
+                              host='192.168.1.101',
                               database='xbus')  
 
             cursor = cnx.cursor()
@@ -114,14 +114,16 @@ try:
                             if (key.upper() == uid.upper()):
                                 #si el uid es igual al key que acabamos de capturar y el estado es 1 osea activo
                                 #consultamos el monto del pasaje
-
+                                
                                 if(saldo_actual >= pasaje):
                                     try:
                                         cursor.execute ("UPDATE tarjetas "
                                                             "SET saldo_actual = saldo_actual - %s "
                                                             "WHERE uid = %s", (pasaje, uid))
-                                        
-                                        args = [timb, int(num), lect]
+                                    
+                                        num = calculate()       
+                                        print(num)
+                                        args = [timb, num, pasaje, lect]
                                         cursor.callproc('InsertarComprobante', args)    
                                         
                                         cnx.commit()
@@ -154,7 +156,7 @@ try:
                 
                print("Tarjeta Desconocida")
 
-
+    
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
                 print("Something is wrong with your user name or password")
@@ -167,7 +169,7 @@ try:
             cnx.close()
         
         #-------
-        
+
 except (KeyboardInterrupt, SystemExit):
 
     print ("Saliendo...")
