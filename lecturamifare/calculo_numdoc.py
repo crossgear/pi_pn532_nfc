@@ -4,12 +4,6 @@ def calculate():
     try:
         con = sqlite3.connect('data.db')
         cursor = con.cursor()
-        """cursor.execute('SELECT numero FROM numeros_documentos;')
-        data = cursor.fetchall()
-        for d in data:
-            numdoc = d[0]
-        #print(numdoc)"""
-        
         cursor.execute('SELECT cabecera, numero FROM numeros_documentos order by numero desc limit 1;')
         for k, j in cursor:
             data=[k,j]

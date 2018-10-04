@@ -82,6 +82,11 @@ try:
         for i in data:
             lect = i[0]#id lector
         
+        cursor.execute('SELECT id FROM movimientos where tipo_movimiento="Pago Pasaje";')
+        data = cursor.fetchall()
+        for h in data:
+            mov = h[0]#id movimiento
+
         fecha = datetime.now().date()
         
         #--- Consulta BD Externa----       
@@ -122,10 +127,16 @@ try:
                                                             "WHERE uid = %s", (pasaje, uid))
                                     
                                         num = calculate()       
-                                        print(num)
-                                        args = [timb, num, pasaje, lect]
+                                        args = [timb,num,lect,mov,fecha]
                                         cursor.callproc('InsertarComprobante', args)    
+                                        cnx.commit()
+                                        value = None
+                                        cantidad=1
+                                        cursor.execute("INSERT INTO detalles_comprobantes (id_comp, id_tarjetas, id_tipopago, cantidad, monto_pagado)"
+                                                        "VALUES((SELECT id FROM comprobantes WHERE num_doc = %s)," 
+                                                        "(SELECT id FROM tarjetas WHERE uid=%s), %s, %s, %s);", (num, uid, value, cantidad, pasaje))
                                         
+           
                                         cnx.commit()
                                         print("-----PAGADO-----")#Verde
                                     except mysql.connector.Error as err:

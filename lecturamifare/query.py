@@ -1,5 +1,7 @@
 import calculo_numdoc
 import sqlite3
+
+
 """import mysql.connector
 
 con = sqlite3.connect('data.db')
@@ -33,9 +35,15 @@ print(args)
 cursor.callproc('InsertarComprobante', args) """
 
 
-"""con = sqlite3.connect('data.db')
+con = sqlite3.connect('data.db')
 cursor = con.cursor()
-cursor.execute('SELECT numero FROM numeros_documentos;')
+cursor.execute('SELECT id FROM movimientos where tipo_movimiento="Pago Pasaje";')
+data = cursor.fetchall()
+for i in data:
+    lect = i[0]#id lector
+print(lect)
+
+"""cursor.execute('SELECT numero FROM numeros_documentos;')
 data = cursor.fetchall()
 for d in data:
     numdoc = d[0]
@@ -57,10 +65,10 @@ for k, j in cursor:
 
 
 con.close()"""
-from calculo_numdoc import calculate
+"""from calculo_numdoc import calculate
 while 1:
     enter=""
     while enter=="":
         enter=input("continuar?")
         cal = calculate()
-        print(cal)
+        print(cal)"""
